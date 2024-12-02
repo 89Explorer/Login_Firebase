@@ -34,7 +34,7 @@ class LoginController: UIViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.isHidden = true
         
-        self.didTapNewUser()
+        // self.didTapNewUser()
     }
     
     // MARK: - Constraints
@@ -93,8 +93,9 @@ class LoginController: UIViewController {
     // MARK: - Selectors
     @objc private func didTapSignIn() {
         let homeVC = HomeController()
-        homeVC.modalPresentationStyle = .fullScreen
-        self.present(homeVC, animated: false, completion: nil)
+        let nav = UINavigationController(rootViewController: homeVC)
+        nav.modalPresentationStyle = .fullScreen
+        self.present(nav, animated: false, completion: nil)
     }
     
     @objc private func didTapNewUser() {

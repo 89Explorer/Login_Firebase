@@ -117,11 +117,7 @@ class RegisterController: UIViewController {
     
     // MARK: - Selectors
     @objc private func didTapSignUp() {
-        let webViewer = WebViewerController(with: "https://explorer89.tistory.com/250")
-        
-        let nav = UINavigationController(rootViewController: webViewer )
-        self.present(nav, animated: true, completion: nil)
-        
+        print("DeBUG PRINT:" , "didTapSignUp")
     }
     
     @objc private func didTapSignIn() {
@@ -154,6 +150,6 @@ extension RegisterController: UITextViewDelegate {
     func textViewDidChangeSelection(_ textView: UITextView) {
         textView.delegate = nil
         textView.selectedTextRange = nil
-        textView.delegate = self 
+        textView.delegate = self
     }
 }
