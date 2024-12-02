@@ -20,11 +20,20 @@ class RegisterController: UIViewController {
     
     private let termsTextView: UITextView = {
         let textView = UITextView()
-        textView.text = "By creating an account, you agree to our Terms & Conditions and you acknowledge that you have read our Privacy Policy."
+        
+        let attributedString = NSMutableAttributedString(string: "By creating an account, you agree to our Terms & Conditions and you acknowledge that you have read our Privacy Policy.")
+        
+        attributedString.addAttribute(.link, value: "terms://termsAndConditions", range: (attributedString.string as NSString).range(of: "Terms & Conditions"))
+        
+        attributedString.addAttribute(.link, value: "privacy://privacyPolicy", range: (attributedString.string as NSString).range(of: "Privacy Policy"))
+        
+        textView.linkTextAttributes = [.foregroundColor: UIColor.systemBlue]
         textView.backgroundColor = .clear
+        textView.attributedText = attributedString
         textView.textColor = .label
         textView.isSelectable = true
         textView.isEditable = false
+        textView.delaysContentTouches = false
         textView.isScrollEnabled = false
         return textView
     }()
@@ -32,7 +41,8 @@ class RegisterController: UIViewController {
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.view.backgroundColor = .systemRed
+        
+        self.termsTextView.delegate = self
         
         self.signUpButton.addTarget(self, action: #selector(didTapSignUp), for: .touchUpInside)
         self.signInButton.addTarget(self, action: #selector(didTapSignIn), for: .touchUpInside)
@@ -116,5 +126,34 @@ class RegisterController: UIViewController {
     
     @objc private func didTapSignIn() {
         self.navigationController?.popToRootViewController(animated: true)
+    }
+}
+
+
+// MARK: Extensions
+extension RegisterController: UITextViewDelegate {
+    
+    func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange) -> Bool {
+        
+        
+        if URL.scheme == "terms" {
+            self.showWebViewerController(with: "https://policies.google.com/terms?h1=en")
+        } else if URL.scheme == "privacy" {
+            self.showWebViewerController(with: "https://policies.google.com/privacy?h1=en")
+        }
+        
+        return true
+    }
+    
+    private func showWebViewerController(with urlString: String) {
+        let vc = WebViewerController(with: urlString)
+        let nav = UINavigationController(rootViewController: vc)
+        self.present(nav, animated: true, completion: nil)
+    }
+    
+    func textViewDidChangeSelection(_ textView: UITextView) {
+        textView.delegate = nil
+        textView.selectedTextRange = nil
+        textView.delegate = self 
     }
 }
