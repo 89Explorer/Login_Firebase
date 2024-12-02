@@ -34,7 +34,6 @@ class LoginController: UIViewController {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.isHidden = true
         
-        // self.didTapNewUser()
     }
     
     // MARK: - Constraints
