@@ -1,0 +1,17 @@
+//
+//  Login_FirebaseTests.swift
+//  Login_FirebaseTests
+//
+//  Created by 권정근 on 12/2/24.
+//
+
+import Testing
+@testable import Login_Firebase
+
+struct Login_FirebaseTests {
+
+    @Test func example() async throws {
+        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+    }
+
+}
