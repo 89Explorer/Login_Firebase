@@ -9,7 +9,6 @@ import UIKit
 
 class CustomButton: UIButton {
     
-    
     // MARK: Enum
     enum FontSize {
         case big
@@ -43,5 +42,4 @@ class CustomButton: UIButton {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
 }
