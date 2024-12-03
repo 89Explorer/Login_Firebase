@@ -47,6 +47,9 @@ class RegisterController: UIViewController {
         self.signUpButton.addTarget(self, action: #selector(didTapSignUp), for: .touchUpInside)
         self.signInButton.addTarget(self, action: #selector(didTapSignIn), for: .touchUpInside)
         
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+           view.addGestureRecognizer(tapGesture)
+        
         configureConstraints()
     }
     
@@ -117,11 +120,55 @@ class RegisterController: UIViewController {
     
     // MARK: - Selectors
     @objc private func didTapSignUp() {
-        print("DeBUG PRINT:" , "didTapSignUp")
+        let username = self.usernameField.text ?? ""
+        let email = self.emailField.text ?? ""
+        let password = self.passwordField.text ?? ""
+        
+        let registerUserRequest = RegisterUserRequest(username: username,
+                                                      email: email,
+                                                      password: password)
+        
+        // Check Username
+        if !Validator.isValidUsername(for: registerUserRequest.username) {
+            AlertManager.showInvalidUsernameAlert(on: self)
+            return
+        }
+        
+        // Check Email
+        if !Validator.isValidEmail(for: registerUserRequest.email) {
+            AlertManager.showInvalidEmailAlert(on: self)
+            return
+        }
+        
+        // Check Password
+        if !Validator.isValidPassword(for: registerUserRequest.password) {
+            AlertManager.showInvalidPasswordAlert(on: self)
+            return
+        }
+
+        AutheService.shared.registerUser(with: registerUserRequest) { wasRegistered, error in
+            
+            if let error = error {
+                AlertManager.showSignInErrorAlert(on: self, with: error)
+                return
+            }
+            
+            if wasRegistered {
+                if let sceneDelegate = self.view.window?.windowScene?.delegate as? SceneDelegate {
+                    sceneDelegate.checkAuthentication()
+                }
+            } else {
+                
+            }
+        }
     }
     
     @objc private func didTapSignIn() {
         self.navigationController?.popToRootViewController(animated: true)
+    }
+    
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
     }
 }
 

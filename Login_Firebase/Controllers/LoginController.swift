@@ -11,7 +11,7 @@ class LoginController: UIViewController {
 
     // MARK: - UI Components
     private let headerView = AuthHeaderView(title: "Sign In", subTitle: "Sign in to your account")
-    private let usernameField = CustomTextField(fieldType: .username)
+    private let emailTextField = CustomTextField(fieldType: .username)
     private let passwordField = CustomTextField(fieldType: .password)
     
     private let signInButton = CustomButton(title: "Sign In", hasBackground: true, fontSize: .big)
@@ -41,14 +41,14 @@ class LoginController: UIViewController {
         self.view.backgroundColor = .systemGreen
         
         self.view.addSubview(headerView)
-        self.view.addSubview(usernameField)
+        self.view.addSubview(emailTextField)
         self.view.addSubview(passwordField)
         self.view.addSubview(signInButton)
         self.view.addSubview(newUserButton)
         self.view.addSubview(forgotPasswordButton)
         
         headerView.translatesAutoresizingMaskIntoConstraints = false
-        usernameField.translatesAutoresizingMaskIntoConstraints = false
+        emailTextField.translatesAutoresizingMaskIntoConstraints = false
         passwordField.translatesAutoresizingMaskIntoConstraints = false
         signInButton.translatesAutoresizingMaskIntoConstraints = false
         newUserButton.translatesAutoresizingMaskIntoConstraints = false
@@ -61,12 +61,12 @@ class LoginController: UIViewController {
             self.headerView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
             self.headerView.heightAnchor.constraint(equalToConstant: 220),
             
-            self.usernameField.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 12),
-            self.usernameField.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-            self.usernameField.heightAnchor.constraint(equalToConstant: 55),
-            self.usernameField.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.85),
+            self.emailTextField.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 12),
+            self.emailTextField.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
+            self.emailTextField.heightAnchor.constraint(equalToConstant: 55),
+            self.emailTextField.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.85),
             
-            self.passwordField.topAnchor.constraint(equalTo: usernameField.bottomAnchor, constant: 12),
+            self.passwordField.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 12),
             self.passwordField.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
             self.passwordField.heightAnchor.constraint(equalToConstant: 55),
             self.passwordField.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.85),
@@ -91,10 +91,34 @@ class LoginController: UIViewController {
     
     // MARK: - Selectors
     @objc private func didTapSignIn() {
-        let homeVC = HomeController()
-        let nav = UINavigationController(rootViewController: homeVC)
-        nav.modalPresentationStyle = .fullScreen
-        self.present(nav, animated: false, completion: nil)
+        
+        let loginRequest = LoginUserRequest(
+            email: self.emailTextField.text ?? "",
+            password: self.passwordField.text ?? ""
+        )
+        
+        // Check Email
+        if !Validator.isValidEmail(for: loginRequest.email) {
+            AlertManager.showInvalidEmailAlert(on: self)
+            return
+        }
+        
+        // Check Password
+        if !Validator.isValidPassword(for: loginRequest.password) {
+            AlertManager.showInvalidPasswordAlert(on: self)
+            return
+        }
+
+        AutheService.shared.signIn(with: loginRequest) { error in
+            if let error = error {
+                AlertManager.showSignInErrorAlert(on: self, with: error)
+                return
+            }
+            
+            if let sceneDelegate = self.view.window?.windowScene?.delegate as? SceneDelegate {
+                sceneDelegate.checkAuthentication()
+            }
+        }
     }
     
     @objc private func didTapNewUser() {
