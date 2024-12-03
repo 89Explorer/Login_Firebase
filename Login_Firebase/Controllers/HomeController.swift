@@ -25,12 +25,29 @@ class HomeController: UIViewController {
         super.viewDidLoad()
         
         configureConstraints()
+        
+        AutheService.shared.fetchUser { [weak self] user, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                AlertManager.showFetchingUserError(on: self, with: error)
+                return
+            }
+            
+            if let user = user {
+                self.label.text = "Username : \(user.username) \n UserEmail : \(user.email)"
+            }
+        }
     }
     
     // MARK: - Constraints
     private func configureConstraints() {
         self.view.backgroundColor = .systemBrown
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(didTapLogout))
+        
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "DeleteUser", style: .plain, target: self, action: #selector(didTapDelete))
+        
+        
         
         self.view.addSubview(label)
         
@@ -57,6 +74,21 @@ class HomeController: UIViewController {
                 sceneDelegate.checkAuthentication()
             }
         }
+    }
+    
+    @objc private func didTapDelete() {
+        AutheService.shared.deleteUser { success, error in
+            if success {
+                print("회원 탈퇴 성공!")
+                // 탈퇴 후 초기 화면으로 이동
+                if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate {
+                    sceneDelegate.checkAuthentication()
+                }
+            } else if let error = error {
+                print("회원 탈퇴 실패: \(error.localizedDescription)")
+            }
+        }
+
     }
 }
 

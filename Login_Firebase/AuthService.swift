@@ -83,4 +83,65 @@ class AutheService {
             completion(error)
         }
     }
+    
+    
+    public func forgotPassword(with email: String, completion: @escaping (Error?) -> Void) {
+        Auth.auth().sendPasswordReset(withEmail: email) { error in
+            completion(error)
+        }
+    }
+    
+    
+    public func fetchUser(completion: @escaping (User?, Error?) -> Void) {
+        guard let userUID = Auth.auth().currentUser?.uid else { return }
+        
+        let db = Firestore.firestore()
+        
+        db.collection("users")
+            .document(userUID)
+            .getDocument { snapshot, error in
+                if let error = error {
+                    completion(nil, error)
+                    return
+                }
+                
+                if let snapshot = snapshot,
+                   let snapshotData = snapshot.data(),
+                   let username = snapshotData["username"] as? String,
+                   let email = snapshotData["email"] as? String {
+                    
+                    let user = User(username: username, email: email, userUID: userUID)
+                    completion(user, nil)
+                }
+            }
+    }
+    
+    public func deleteUser(completion: @escaping (Bool, Error?) -> Void) {
+        guard let user = Auth.auth().currentUser else {
+            completion(false, NSError(domain: "", code: 401, userInfo: [NSLocalizedDescriptionKey: "No user is logged in."]))
+            return
+        }
+        
+        let db = Firestore.firestore()
+        let userUID = user.uid
+        
+        // Firestore 데이터 삭제
+        db.collection("users").document(userUID).delete { error in
+            if let error = error {
+                completion(false, error)
+                return
+            }
+            
+            // Firebase Authentication 사용자 삭제
+            user.delete { error in
+                if let error = error {
+                    completion(false, error)
+                    return
+                }
+                
+                completion(true, nil) // 성공
+            }
+        }
+    }
+    
 }
