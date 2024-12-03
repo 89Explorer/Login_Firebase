@@ -24,6 +24,7 @@ class HomeController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        configureConstraints()
     }
     
     // MARK: - Constraints
@@ -32,6 +33,8 @@ class HomeController: UIViewController {
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(didTapLogout))
         
         self.view.addSubview(label)
+        
+        label.translatesAutoresizingMaskIntoConstraints = false 
         
         NSLayoutConstraint.activate([
             label.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
@@ -42,7 +45,18 @@ class HomeController: UIViewController {
     
     // MARK: - Selectors
     @objc private func didTapLogout() {
-        
+        AutheService.shared.signOut { [weak self] error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                AlertManager.showLogoutErrorAlert(on: self, with: error)
+                return
+            }
+            
+            if let sceneDelegate = self.view.window?.windowScene?.delegate as? SceneDelegate {
+                sceneDelegate.checkAuthentication()
+            }
+        }
     }
 }
 
