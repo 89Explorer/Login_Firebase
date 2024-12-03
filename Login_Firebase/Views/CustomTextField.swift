@@ -18,7 +18,6 @@ class CustomTextField: UITextField {
     
     private let authFieldType: CustomTextFieldType
     
-    
     init(fieldType: CustomTextFieldType) {
         self.authFieldType = fieldType
         super.init(frame: .zero)

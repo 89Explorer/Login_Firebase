@@ -43,11 +43,9 @@ class HomeController: UIViewController {
     // MARK: - Constraints
     private func configureConstraints() {
         self.view.backgroundColor = .systemBrown
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(didTapLogout))
-        
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "DeleteUser", style: .plain, target: self, action: #selector(didTapDelete))
-        
-        
+        let logoutButton = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(didTapLogout))
+        let deleteUserButton = UIBarButtonItem(title: "DeleteUser", style: .plain, target: self, action: #selector(didTapDelete))
+        self.navigationItem.rightBarButtonItems = [deleteUserButton, logoutButton]
         
         self.view.addSubview(label)
         
