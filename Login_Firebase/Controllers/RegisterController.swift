@@ -6,11 +6,16 @@
 //
 
 import UIKit
+import PhotosUI
+import Photos
 
 class RegisterController: UIViewController {
-
+    
     // MARK: - UI Components
     private let headerView = AuthHeaderView(title: "Sign Up", subTitle: "Create your account")
+    
+    private let userPofileView = CustomImageView(frame: .zero)
+    
     private let usernameField = CustomTextField(fieldType: .username)
     private let emailField = CustomTextField(fieldType: .email)
     private let passwordField = CustomTextField(fieldType: .password)
@@ -37,7 +42,7 @@ class RegisterController: UIViewController {
         textView.isScrollEnabled = false
         return textView
     }()
-
+    
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -48,9 +53,11 @@ class RegisterController: UIViewController {
         self.signInButton.addTarget(self, action: #selector(didTapSignIn), for: .touchUpInside)
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
-           view.addGestureRecognizer(tapGesture)
+        view.addGestureRecognizer(tapGesture)
         
+        userPofileView.setImageType(.system("camera", pointSize: 25))
         configureConstraints()
+        selectUserImage()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -70,6 +77,8 @@ class RegisterController: UIViewController {
         self.view.addSubview(termsTextView)
         self.view.addSubview(signInButton)
         
+        self.view.addSubview(userPofileView)
+        
         headerView.translatesAutoresizingMaskIntoConstraints = false
         usernameField.translatesAutoresizingMaskIntoConstraints = false
         emailField.translatesAutoresizingMaskIntoConstraints = false
@@ -77,7 +86,9 @@ class RegisterController: UIViewController {
         signUpButton.translatesAutoresizingMaskIntoConstraints = false
         termsTextView.translatesAutoresizingMaskIntoConstraints = false
         signInButton.translatesAutoresizingMaskIntoConstraints = false
-    
+        
+        userPofileView.translatesAutoresizingMaskIntoConstraints = false
+        
         
         NSLayoutConstraint.activate([
             
@@ -86,7 +97,13 @@ class RegisterController: UIViewController {
             self.headerView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
             self.headerView.heightAnchor.constraint(equalToConstant: 220),
             
-            self.usernameField.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 12),
+            self.userPofileView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 12),
+            self.userPofileView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            self.userPofileView.widthAnchor.constraint(equalToConstant: 100),
+            self.userPofileView.heightAnchor.constraint(equalToConstant: 100),
+            
+            
+            self.usernameField.topAnchor.constraint(equalTo: userPofileView.bottomAnchor, constant: 12),
             self.usernameField.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
             self.usernameField.heightAnchor.constraint(equalToConstant: 55),
             self.usernameField.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.85),
@@ -118,6 +135,16 @@ class RegisterController: UIViewController {
         ])
     }
     
+    // MARK: - Functions
+    private func selectUserImage() {
+        let didTapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapUserImage))
+        self.userPofileView.addGestureRecognizer(didTapGesture)
+        self.userPofileView.isUserInteractionEnabled = true
+    }
+    
+    
+    
+    
     // MARK: - Selectors
     @objc private func didTapSignUp() {
         let username = self.usernameField.text ?? ""
@@ -145,7 +172,7 @@ class RegisterController: UIViewController {
             AlertManager.showInvalidPasswordAlert(on: self)
             return
         }
-
+        
         AutheService.shared.registerUser(with: registerUserRequest) { wasRegistered, error in
             
             if let error = error {
@@ -169,6 +196,18 @@ class RegisterController: UIViewController {
     
     @objc private func dismissKeyboard() {
         view.endEditing(true)
+    }
+    
+    @objc private func didTapUserImage() {
+        // 기본설정 셋팅
+        var configuration = PHPickerConfiguration(photoLibrary: .shared())
+        configuration.selectionLimit = 1
+        configuration.filter = .images
+        configuration.preferredAssetRepresentationMode = .current
+        
+        let picker = PHPickerViewController(configuration: configuration)
+        picker.delegate = self
+        self.present(picker, animated: true, completion: nil)
     }
 }
 
@@ -200,3 +239,31 @@ extension RegisterController: UITextViewDelegate {
         textView.delegate = self
     }
 }
+
+extension RegisterController: PHPickerViewControllerDelegate {
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        
+        // PHPicker 닫기
+        picker.dismiss(animated: true)
+        
+        // 첫 번째 선택된 아이템 가져오기
+        let itemProvider = results.first?.itemProvider
+        
+        if let itemProvider = itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self) {
+            // UIImage 불러오기
+            itemProvider.loadObject(ofClass: UIImage.self) { (image, error) in
+                if let image = image as? UIImage { // 불러온 이미지 타입 확인
+                    DispatchQueue.main.async {
+                        // CustomImageView에 이미지 설정
+                        self.userPofileView.setImageType(.user(image))
+                    }
+                } else {
+                    print("이미지가 올바르지 않습니다.")
+                }
+            }
+        } else {
+            print("이미지를 불러올 수 없습니다.")
+        }
+    }
+}
+
