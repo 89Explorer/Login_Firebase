@@ -11,6 +11,8 @@ import Photos
 
 class RegisterController: UIViewController {
     
+    var profileImage: UIImage?
+    
     // MARK: - UI Components
     private let headerView = AuthHeaderView(title: "Sign Up", subTitle: "Create your account")
     
@@ -150,10 +152,14 @@ class RegisterController: UIViewController {
         let username = self.usernameField.text ?? ""
         let email = self.emailField.text ?? ""
         let password = self.passwordField.text ?? ""
+        let userImage = profileImage ?? UIImage()
         
         let registerUserRequest = RegisterUserRequest(username: username,
                                                       email: email,
-                                                      password: password)
+                                                      password: password,
+                                                      userImage: userImage)
+        
+        print("userImage: \(userImage)")
         
         // Check Username
         if !Validator.isValidUsername(for: registerUserRequest.username) {
@@ -173,7 +179,7 @@ class RegisterController: UIViewController {
             return
         }
         
-        AutheService.shared.registerUser(with: registerUserRequest) { wasRegistered, error in
+        AutheService.shared.registerUser(request: registerUserRequest) { wasRegistered, error in
             
             if let error = error {
                 AlertManager.showSignInErrorAlert(on: self, with: error)
@@ -185,7 +191,7 @@ class RegisterController: UIViewController {
                     sceneDelegate.checkAuthentication()
                 }
             } else {
-                
+                AlertManager.showSignInErrorAlert(on: self, with: NSError(domain: "", code: 500, userInfo: [NSLocalizedDescriptionKey: "회원가입 실패"]))
             }
         }
     }
@@ -203,7 +209,7 @@ class RegisterController: UIViewController {
         var configuration = PHPickerConfiguration(photoLibrary: .shared())
         configuration.selectionLimit = 1
         configuration.filter = .images
-        configuration.preferredAssetRepresentationMode = .current
+        configuration.preferredAssetRepresentationMode = .compatible
         
         let picker = PHPickerViewController(configuration: configuration)
         picker.delegate = self
@@ -255,9 +261,11 @@ extension RegisterController: PHPickerViewControllerDelegate {
                 if let image = image as? UIImage { // 불러온 이미지 타입 확인
                     DispatchQueue.main.async {
                         // CustomImageView에 이미지 설정
+                        self.profileImage = image
                         self.userPofileView.setImageType(.user(image))
                     }
-                } else {
+                }
+                else {
                     print("이미지가 올바르지 않습니다.")
                 }
             }

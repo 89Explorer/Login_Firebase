@@ -6,11 +6,14 @@
 //
 
 import Foundation
+import UIKit
 
 struct RegisterUserRequest {
     
     let username: String
     let email: String
     let password: String
+    
+    var userImage: UIImage
     
 }

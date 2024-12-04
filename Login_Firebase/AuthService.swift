@@ -8,13 +8,14 @@
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
+import FirebaseStorage
 
 class AutheService {
     
     public static let shared = AutheService()
     private init() { }
     
-    
+    /*
     /// A method to register the user
     /// - Parameters:
     ///   - userRequest: The users information (email, password, username)
@@ -56,6 +57,96 @@ class AutheService {
                 }
         }
     }
+     */
+    
+
+    func registerUser(request: RegisterUserRequest, completion: @escaping (Bool, Error?) -> Void) {
+        // 1. Firebase Auth로 사용자 생성
+        Auth.auth().createUser(withEmail: request.email, password: request.password) { authResult, error in
+            if let error = error {
+                print("Firebase Auth 사용자 생성 실패: \(error.localizedDescription)")
+                completion(false, error)
+                return
+            }
+            
+            guard let userUID = authResult?.user.uid else {
+                let uidError = NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "사용자 UID를 가져올 수 없습니다."])
+                completion(false, uidError)
+                return
+            }
+            
+            // 2. 이미지 업로드와 Firestore 데이터 저장 통합
+            self.uploadProfileAndSaveUserToFirestore(userUID: userUID, request: request) { success, error in
+                if success {
+                    print("회원가입 성공")
+                    completion(true, nil)
+                } else {
+                    print("회원가입 실패: \(error?.localizedDescription ?? "알 수 없는 에러")")
+                    completion(false, error)
+                }
+            }
+        }
+    }
+
+    private func uploadProfileAndSaveUserToFirestore(userUID: String, request: RegisterUserRequest, completion: @escaping (Bool, Error?) -> Void) {
+        // 1. 이미지를 Firebase Storage에 업로드
+        guard let imageData = request.userImage.jpegData(compressionQuality: 0.5) else {
+            completion(false, NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "이미지 데이터를 변환할 수 없습니다."]))
+            return
+        }
+        
+        let storageRef =
+        Storage.storage().reference().child("profile_images/\(userUID).jpg")
+        
+        storageRef.putData(imageData, metadata: nil) { metadata, error in
+            if let error = error {
+                print("Firebase Storage 업로드 실패: \(error.localizedDescription)")
+                completion(false, error)
+                return
+            }
+            
+            // 2. 다운로드 URL 가져오기
+            storageRef.downloadURL { url, error in
+                if let error = error {
+                    print("Firebase Storage 다운로드 URL 가져오기 실패: \(error.localizedDescription)")
+                    completion(false, error)
+                    return
+                }
+                
+                guard let profileImageURL = url?.absoluteString else {
+                    completion(false, NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "이미지 URL을 가져올 수 없습니다."]))
+                    return
+                }
+                
+                // 3. Firestore에 사용자 정보 저장
+                self.saveUserToFirestore(userUID: userUID, username: request.username, email: request.email, profileImageURL: profileImageURL) { success, error in
+                    completion(success, error)
+                }
+            }
+        }
+    }
+
+    private func saveUserToFirestore(userUID: String, username: String, email: String, profileImageURL: String, completion: @escaping (Bool, Error?) -> Void) {
+        let db = Firestore.firestore()
+        
+        let userData: [String: Any] = [
+            "username": username,
+            "email": email,
+            "profileImageURL": profileImageURL,
+            "createdAt": Timestamp()
+        ]
+        
+        db.collection("users").document(userUID).setData(userData) { error in
+            if let error = error {
+                print("Firestore 저장 실패: \(error.localizedDescription)")
+                completion(false, error)
+            } else {
+                print("Firestore 저장 성공")
+                completion(true, nil)
+            }
+        }
+    }
+
     
     
     
@@ -143,5 +234,7 @@ class AutheService {
             }
         }
     }
+    
+    // 이미지 업로드
     
 }
