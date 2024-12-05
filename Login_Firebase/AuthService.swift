@@ -268,8 +268,6 @@ class AutheService {
     }
     
     
-    
-    
     public func deleteUser(completion: @escaping (Bool, Error?) -> Void) {
         guard let user = Auth.auth().currentUser else {
             completion(false, NSError(domain: "", code: 401, userInfo: [NSLocalizedDescriptionKey: "No user is logged in."]))
@@ -278,23 +276,40 @@ class AutheService {
         
         let db = Firestore.firestore()
         let userUID = user.uid
+        let storageRef = Storage.storage().reference(withPath: "profile_images/\(userUID).jpg")
         
-        // Firestore 데이터 삭제
+        // 1. Firestore 데이터 삭제
         db.collection("users").document(userUID).delete { error in
             if let error = error {
                 completion(false, error)
                 return
             }
             
-            // Firebase Authentication 사용자 삭제
-            user.delete { error in
+            print("Firestore 데이터 삭제 성공")
+            
+            // 2. Firebase Storage에서 프로필 이미지 삭제
+            storageRef.delete { error in
                 if let error = error {
+                    print("Firebase Storage 이미지 삭제 실패: \(error.localizedDescription)")
                     completion(false, error)
                     return
                 }
                 
-                completion(true, nil) // 성공
+                print("Firebase Storage 이미지 삭제 성공")
+                
+                // 3. Firebase Authentication 사용자 삭제
+                user.delete { error in
+                    if let error = error {
+                        print("Firebase Auth 사용자 삭제 실패: \(error.localizedDescription)")
+                        completion(false, error)
+                        return
+                    }
+                    
+                    print("Firebase Auth 사용자 삭제 성공")
+                    completion(true, nil) // 성공
+                }
             }
         }
     }
+    
 }
