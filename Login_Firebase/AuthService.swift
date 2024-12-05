@@ -191,9 +191,7 @@ class AutheService {
         
         let db = Firestore.firestore()
         
-        db.collection("users")
-            .document(userUID)
-            .getDocument { snapshot, error in
+        db.collection("users").document(userUID).getDocument { snapshot, error in
             if let error = error {
                 completion(nil, error)
                 return
@@ -209,19 +207,21 @@ class AutheService {
             let pathRef = Storage.storage().reference(withPath: "profile_images/\(userUID).jpg")
             
             pathRef.getData(maxSize: 1 * 1024 * 1024) { data, error in
-                var userImage: UIImage? = nil
+                let userImage: UIImage = {
+                    if let data = data, let image = UIImage(data: data) {
+                        return image
+                    } else {
+                        print("이미지를 가져오지 못했습니다: \(error?.localizedDescription ?? "알 수 없는 에러")")
+                        return UIImage(named: "default_profile")!
+                    }
+                }()
                 
-                if let data = data {
-                    userImage = UIImage(data: data)
-                } else {
-                    print("이미지를 가져오지 못했습니다: \(error?.localizedDescription ?? "알 수 없는 에러")")
-                }
-                
-                let user = User(username: username, email: email, userUID: userUID, userImage: userImage!)
+                let user = User(username: username, email: email, userUID: userUID, userImage: userImage)
                 completion(user, nil)
             }
         }
     }
+
     
     
     /*
