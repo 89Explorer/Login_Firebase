@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SDWebImage
 
 class HomeController: UIViewController {
 
@@ -20,11 +21,14 @@ class HomeController: UIViewController {
         return label
     }()
     
+    private let profileImage = CustomImageView(frame: .zero)
+    
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
         configureConstraints()
+        self.profileImage.setImageType(.system("person", pointSize: 25))
         
         AutheService.shared.fetchUser { [weak self] user, error in
             guard let self = self else { return }
@@ -35,7 +39,12 @@ class HomeController: UIViewController {
             }
             
             if let user = user {
-                self.label.text = "Username : \(user.username) \n UserEmail : \(user.email)"
+                DispatchQueue.main.async {
+                    self.label.text = "Username : \(user.username) \n UserEmail : \(user.email)"
+                    
+                    self.profileImage.setImageType(.user(user.userImage))
+                }
+                
             }
         }
     }
@@ -48,12 +57,19 @@ class HomeController: UIViewController {
         self.navigationItem.rightBarButtonItems = [deleteUserButton, logoutButton]
         
         self.view.addSubview(label)
+        self.view.addSubview(profileImage)
         
-        label.translatesAutoresizingMaskIntoConstraints = false 
+        label.translatesAutoresizingMaskIntoConstraints = false
+        profileImage.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             label.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: self.view.centerYAnchor)
+            label.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
+            
+            profileImage.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+            profileImage.centerYAnchor.constraint(equalTo: self.view.centerYAnchor, constant: -100),
+            profileImage.widthAnchor.constraint(equalToConstant: 100),
+            profileImage.heightAnchor.constraint(equalToConstant: 100)
         ])
         
     }

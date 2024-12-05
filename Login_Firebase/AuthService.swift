@@ -184,28 +184,90 @@ class AutheService {
     
     
     public func fetchUser(completion: @escaping (User?, Error?) -> Void) {
-        guard let userUID = Auth.auth().currentUser?.uid else { return }
+        guard let userUID = Auth.auth().currentUser?.uid else {
+            completion(nil, NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "사용자가 로그인되어 있지 않습니다."]))
+            return
+        }
         
         let db = Firestore.firestore()
         
         db.collection("users")
             .document(userUID)
             .getDocument { snapshot, error in
+            if let error = error {
+                completion(nil, error)
+                return
+            }
+            
+            guard let snapshotData = snapshot?.data(),
+                  let username = snapshotData["username"] as? String,
+                  let email = snapshotData["email"] as? String else {
+                completion(nil, NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Firestore 데이터가 올바르지 않습니다."]))
+                return
+            }
+            
+            let pathRef = Storage.storage().reference(withPath: "profile_images/\(userUID).jpg")
+            
+            pathRef.getData(maxSize: 1 * 1024 * 1024) { data, error in
+                var userImage: UIImage? = nil
+                
+                if let data = data {
+                    userImage = UIImage(data: data)
+                } else {
+                    print("이미지를 가져오지 못했습니다: \(error?.localizedDescription ?? "알 수 없는 에러")")
+                }
+                
+                let user = User(username: username, email: email, userUID: userUID, userImage: userImage!)
+                completion(user, nil)
+            }
+        }
+    }
+    
+    
+    /*
+    public func fetchUser(completion: @escaping (User?, Error?) -> Void) {
+        guard let userUID = Auth.auth().currentUser?.uid else {
+            completion(nil, NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "사용자가 로그인되어 있지 않습니다."]))
+            return
+        }
+        
+        let db = Firestore.firestore()
+        
+        db.collection("users").document(userUID).getDocument { snapshot, error in
+            if let error = error {
+                completion(nil, error)
+                return
+            }
+            
+            guard let snapshotData = snapshot?.data(),
+                  let username = snapshotData["username"] as? String,
+                  let email = snapshotData["email"] as? String else {
+                completion(nil, NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Firestore 데이터가 올바르지 않습니다."]))
+                return
+            }
+            
+            let pathRef = Storage.storage().reference(withPath: "profile_images/\(userUID).jpg")
+            
+            // Firebase Storage에서 URL 가져오기
+            pathRef.downloadURL { url, error in
                 if let error = error {
+                    print("Firebase Storage 다운로드 URL 가져오기 실패: \(error.localizedDescription)")
                     completion(nil, error)
                     return
                 }
                 
-                if let snapshot = snapshot,
-                   let snapshotData = snapshot.data(),
-                   let username = snapshotData["username"] as? String,
-                   let email = snapshotData["email"] as? String {
-                    
-                    let user = User(username: username, email: email, userUID: userUID)
-                    completion(user, nil)
-                }
+                let profileImageURL = url?.absoluteString
+                print("Firebase Storage에서 다운로드 URL: \(profileImageURL ?? "없음")")
+                
+                // User 객체 생성 (URL 사용)
+                let user = User(username: username, email: email, userUID: userUID, userImage: profileImageURL!)
+                completion(user, nil)
             }
+        }
     }
+    */
+    
+    
     
     public func deleteUser(completion: @escaping (Bool, Error?) -> Void) {
         guard let user = Auth.auth().currentUser else {
@@ -234,7 +296,4 @@ class AutheService {
             }
         }
     }
-    
-    // 이미지 업로드
-    
 }
