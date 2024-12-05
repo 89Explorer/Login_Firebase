@@ -13,5 +13,5 @@ struct User {
     let email: String
     let userUID: String
     
-    let userImage: UIImage
+    let userImage: String?
 }

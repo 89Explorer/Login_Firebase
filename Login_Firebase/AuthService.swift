@@ -182,7 +182,7 @@ class AutheService {
         }
     }
     
-    
+    /*
     public func fetchUser(completion: @escaping (User?, Error?) -> Void) {
         guard let userUID = Auth.auth().currentUser?.uid else {
             completion(nil, NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "사용자가 로그인되어 있지 않습니다."]))
@@ -221,10 +221,11 @@ class AutheService {
             }
         }
     }
+    */
 
     
     
-    /*
+    
     public func fetchUser(completion: @escaping (User?, Error?) -> Void) {
         guard let userUID = Auth.auth().currentUser?.uid else {
             completion(nil, NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "사용자가 로그인되어 있지 않습니다."]))
@@ -265,7 +266,7 @@ class AutheService {
             }
         }
     }
-    */
+    
     
     
     

@@ -6,12 +6,18 @@
 //
 
 import UIKit
+import SDWebImage
 
 class CustomImageView: UIImageView {
 
     enum ImageType {
         case system(String, pointSize: CGFloat)
-        case user(UIImage)
+        case user(userImageSource)
+    }
+    
+    enum userImageSource {
+        case image(UIImage)
+        case url(URL)
     }
     
     private var imageType: ImageType? {
@@ -53,12 +59,19 @@ class CustomImageView: UIImageView {
             self.image = UIImage(systemName: systemName, withConfiguration: config)
             self.tintColor = .black
             self.contentMode = .center
-        case .user(let userImage):
-            self.image = userImage
-            self.contentMode = .scaleAspectFill
+            
+        case .user(let source):
+            switch source {
+            case .image(let userImage):
+                self.contentMode = .scaleAspectFill
+                self.image = userImage
+            case .url(let url):
+                self.contentMode = .scaleAspectFill
+                self.sd_setImage(with: url, placeholderImage: UIImage(named: "profile"))
+            }
         case .none:
-            self.image = nil
+            return self.image = nil
         }
+        
     }
-    
 }

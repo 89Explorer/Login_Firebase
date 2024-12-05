@@ -262,7 +262,7 @@ extension RegisterController: PHPickerViewControllerDelegate {
                     DispatchQueue.main.async {
                         // CustomImageView에 이미지 설정
                         self.profileImage = image
-                        self.userPofileView.setImageType(.user(image))
+                        self.userPofileView.setImageType(.user(.image(image)))
                     }
                 }
                 else {

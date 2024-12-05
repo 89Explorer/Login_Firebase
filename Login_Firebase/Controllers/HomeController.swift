@@ -41,8 +41,12 @@ class HomeController: UIViewController {
             if let user = user {
                 DispatchQueue.main.async {
                     self.label.text = "Username : \(user.username) \n UserEmail : \(user.email)"
-                    
-                    self.profileImage.setImageType(.user(user.userImage))
+                    if let profileImageURL = user.userImage,
+                       let url = URL(string: profileImageURL) {
+                        self.profileImage.setImageType(.user(.url(url)))
+                    } else {
+                        self.profileImage.setImageType(.user(.image(UIImage(named: "profile")!)))
+                    }
                 }
                 
             }
